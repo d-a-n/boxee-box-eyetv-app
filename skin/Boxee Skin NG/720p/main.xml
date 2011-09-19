@@ -1,0 +1,343 @@
+﻿<?xml version="1.0"?>
+<window type="window" id="14000">
+		<defaultcontrol always="true">52</defaultcontrol>
+		<allowoverlay>yes</allowoverlay>
+		<onload lang="python"><![CDATA[
+		
+import urllib2, StringIO, gzip, time
+import simplejson as json
+
+
+mc.ShowDialogWait()
+
+READ_BLOCK_SIZE = 1024*8
+
+url = "http://%s:2170/live/channels/1/0/0/100/_IPHONE_CHANNELS" % "ip"
+
+request = urllib2.Request(url)
+
+request.add_header('Accept-encoding', 'gzip,deflate')
+request.add_header('X-Eyeconnect-Client', 'iPhoneApp1')
+request.add_header('X-Eyeconnect-Token', 'xxx')
+
+response = urllib2.urlopen(request)
+
+#make sure the response is compressed
+isGZipped = response.headers.get('content-encoding', '').find('gzip') >= 0
+
+#file to write data to
+#outFile = open("bible.html", "w")
+
+contentStr = ""
+
+while True:
+  data = response.read(READ_BLOCK_SIZE)
+  if not data: break
+  if isGZipped:
+	#make a file like thing of the read bytes
+	data = StringIO.StringIO(data)
+	#open the file-like-thing as a gzipped file
+	data = gzip.GzipFile(fileobj=data).read()
+  #outFile.write(data)
+  contentStr += data
+ 
+content = json.loads(contentStr)
+
+
+
+#print content['channelList']
+
+#channels = []
+
+
+clist = mc.GetActiveWindow().GetList(52)
+channelList = mc.ListItems()
+
+for channel in content['channelList']:
+	#t = {'name':channel['name'], 'number':channel['displayNumber'], 'now': channel.get('EPGnow',''), 'next': channel.get('EPGnext','') }
+	#channels.append(t)	
+	
+	item = mc.ListItem(mc.ListItem.MEDIA_VIDEO_OTHER)
+	item.SetLabel(str(channel['displayNumber']) + ". " + channel['name'].encode('ascii','ignore') + "\n     " + channel.get('EPGnow','').encode('ascii','ignore')+ "\n     " + channel.get('EPGnext','').encode('ascii','ignore'))
+	item.SetContentType("video/MP2T")
+	item.SetPath("http://192.168.178.50:9001")
+	item.SetProperty("channel_url", "http://192.168.178.50:9002/%s" % str(channel['displayNumber']))
+	item.SetProperty("epg_now", channel.get('EPGnow','').encode('ascii','ignore'))
+	item.SetProperty("epg_next", channel.get('EPGnext','').encode('ascii','ignore'))
+	#item.SetDuration(999999)
+	item.SetDescription(channel.get('EPGnow','').encode('ascii','ignore') + "\n\n" + channel.get('EPGnext','').encode('ascii','ignore'), False)
+	channelList.append(item)
+
+
+mc.HideDialogWait()
+clist.SetItems(channelList)
+
+if not selected_index:
+	selected_index = 0
+
+
+	
+clist.SetFocusedItem(selected_index)
+
+
+
+		
+
+
+		
+'''	
+		
+		
+channelList = mc.ListItems()
+li = {'ARD':1,'ZDF':2,'RTL':3,'RTL2':4,'RTL3':5,'RTL4':6,'RTL5':7,'RTL6':8}
+mc.LogDebug("DEMO")
+for name,ch in li.items():
+	item = mc.ListItem(mc.ListItem.MEDIA_VIDEO_OTHER)
+	item.SetLabel(name)
+	#item.SetLabel2("demo")
+	#item.SetContentType("url")
+	item.SetContentType("video/mpeg")
+	item.SetPath("http://192.168.178.50:9001")
+	item.SetProperty("channel_url", "http://192.168.178.50:9002/%d" % ch)
+	item.SetProperty("now", "http://192.168.178.50:9002/%d" % ch)
+	item.SetDuration(999999)
+	item.SetDescription("The early life and career of Vito Corleone in 1920s New York is portrayed while his son,<br/>Michael, expands and tightens his grip on his crime syndicate stretching from Lake Tahoe, Nevada to pre-revolution 1958 Cuba", False)
+	channelList.append(item)
+
+mc.GetActiveWindow().GetList(52).SetItems(channelList)
+
+'''
+]]></onload>
+		<controls>
+				<include>Common_Background</include>
+				<include>Common_Status</include>
+				<control type="group">
+						<control type="label">
+								<include>BrowseMainTitle</include>
+								<label>EyeTV</label>
+						</control>
+						<control type="label" id="110">
+								<include>BrowseSubTitle</include>
+								<posx>320</posx>
+								<label>[UPPERCASE]channels[/UPPERCASE]</label>
+						</control>
+				</control>
+
+				<control type="label">
+						<posx>50</posx>
+						<posy>170</posy>
+						<width>754</width>
+						<height>30</height>
+						<font>font21</font>
+						<align>left</align>
+						<aligny>top</aligny>
+						<wrapmultiline>true</wrapmultiline>
+						<label>No results found.</label>
+						<textcolor>white</textcolor>
+						<selectedcolor>green</selectedcolor>
+						<visible>Container(52).IsEmpty</visible>
+				</control>
+
+				
+				<control type="group" id="9001">
+						<control type="fixedlist" id="52">
+								<posx>50</posx>
+								<posy>100</posy>
+								<width>1150</width>
+								<height>550</height>
+								<onleft>-</onleft>
+								<onright>-</onright>
+								<onup>-</onup>
+								<ondown>-</ondown>
+								<scrolltime>200</scrolltime>
+								<pagecontrol>60</pagecontrol>
+								<orientation>vertical</orientation>
+								<!-- <offsetx>14</offsetx>
+								<offsety>4</offsety> -->
+								<focusposition>4</focusposition>
+								<itemlayout height="110">
+										<control type="image">
+												<posx>0</posx>
+												<posy>40</posy>
+												<width>1000</width>
+												<height>140</height>
+												<texture>home_line_horizontal_left.png</texture>
+										</control>
+										<control type="label">
+												<posy>8</posy>
+												<posx>40</posx>
+												<font>font24b</font>
+												<label>$INFO[ListItem.Label]</label>
+												<width>1000</width>
+												<height>100</height>
+												<wrapmultiline>true</wrapmultiline>
+												<textcolor>white</textcolor>
+												<selectedcolor>white</selectedcolor>
+										</control>
+								</itemlayout>
+								<focusedlayout height="110">
+										<control type="image">
+												<posx>0</posx>
+												<posy>40</posy>
+												<width>1000</width>
+												<height>140</height>
+												<texture>home_line_horizontal_left.png</texture>
+										</control>
+										<control type="image">
+												<visible>Control.HasFocus(52)</visible>
+												<posx>-6</posx>
+												<posy>-16</posy>
+												<width>900</width>
+												<height>140</height>
+												<texture border="39">line_view_on.png</texture>
+										</control>
+										<control type="label">
+												<posy>8</posy>
+												<posx>40</posx>
+												<font>font24b</font>
+												<label>$INFO[ListItem.Label]</label>
+												<width>1000</width>
+												<height>100</height>
+												<wrapmultiline>true</wrapmultiline>
+												<textcolor>white</textcolor>
+												<selectedcolor>white</selectedcolor>
+										</control>
+								</focusedlayout>
+								<!--
+								<content type="directory">rss://boxee.imojo.de/tv.rss</content>
+								-->
+								
+							
+								
+								<content type="action">
+
+									<onfocus lang="python"><![CDATA[
+									mc.ShowDialogOk("Error", str(itemNumber))
+									]]>
+									</onfocus>	
+									
+									<onclick lang="python">
+<![CDATA[
+import urllib2, time
+
+#http = mc.Http()
+
+
+list = mc.GetActiveWindow().GetList(52)
+selected_index = list.GetFocusedItem()
+item = list.GetItem(selected_index)
+
+#data = http.Get( item.GetProperty("channel_url") )
+#print http.GetHttpHeader('location')
+
+response = urllib2.urlopen( item.GetProperty("channel_url") )
+response.close()
+
+#item.SetPath("http://192.168.178.50:9001")
+
+#time.sleep(5)
+
+#mc.GetActiveWindow().PushState()
+mplayer = mc.Player()
+mplayer.Pause()
+mplayer.Stop()
+mplayer.Play(item)
+
+#mc.ShowDialogOk("Error", str(selected_index))
+#mc.LogDebug("------------>dfssd")
+
+]]>
+									</onclick>
+								</content>
+								
+						</control>
+						
+						<!--
+						<control type="image">
+								<posx>605</posx>
+								<posy>100</posy>
+								<width>67</width>
+								<height>680</height>
+								<texture>home_line_vertical.png</texture>
+								<colordiffuse>80FFFFFF</colordiffuse>
+						</control>
+						-->
+						
+						<include>BrowseEmptyList</include>
+
+<!--
+				<control type="videowindow">
+					<posx>156</posx>
+					<posy>60</posy>
+					<width>400</width>
+					<height>300</height>
+ 				</control>
+-->
+
+				</control>
+				
+				
+				<!--
+				<control type="group">
+
+					<control type="label">
+							<posx>650</posx>
+							<posy>150</posy>
+							<width>600</width>
+							<height>40</height>
+							<font>font21</font>
+							<align>left</align>
+							<aligny>top</aligny>
+							<scroll>true</scroll>
+							<wrapmultiline>true</wrapmultiline>
+							<label>[UPPERCASE]Now:[/UPPERCASE]</label>
+							<textcolor>white</textcolor>
+					</control>
+					<control type="label" id="7001">
+							<posx>700</posx>
+							<posy>190</posy>
+							<width>600</width>
+							<height>40</height>
+							<font>font21</font>
+							<align>left</align>
+							<aligny>top</aligny>
+							<scroll>true</scroll>
+							<wrapmultiline>true</wrapmultiline>
+							<label>Title movie</label>
+							<textcolor>white</textcolor>
+					</control>
+
+					<control type="label">
+							<posx>650</posx>
+							<posy>260</posy>
+							<width>600</width>
+							<height>40</height>
+							<font>font21</font>
+							<align>left</align>
+							<aligny>top</aligny>
+							<scroll>true</scroll>
+							<wrapmultiline>true</wrapmultiline>
+							<label>[UPPERCASE]up next:[/UPPERCASE]</label>
+							<textcolor>white</textcolor>
+					</control>
+					<control type="label" id="7002">
+							<posx>700</posx>
+							<posy>300</posy>
+							<width>600</width>
+							<height>40</height>
+							<font>font21</font>
+							<align>left</align>
+							<aligny>top</aligny>
+							<scroll>true</scroll>
+							<wrapmultiline>true</wrapmultiline>
+							<label>Title movie</label>
+							<textcolor>white</textcolor>
+					</control>
+
+				</control>
+				-->
+
+				<include>BrowseLoadingAnimation</include>
+
+		</controls>
+</window>

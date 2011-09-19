@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<app>
+  <id>eyetv</id>
+  <name>EyeTV</name>
+  <version>1.0</version>
+  <description>Watch live TV</description>
+  <thumb>http://www.benm.at/wp-content/uploads/2009/09/eyetv_icon.jpg</thumb>
+  <repository></repository>
+  <media>video</media>
+  <copyright></copyright>
+  <email></email>
+  <type>skin</type>
+  <startWindow>14000</startWindow>
+  <platform>all</platform>
+  <minversion>0.9.5</minversion>
+  <test-app>true</test-app>
+</app>
